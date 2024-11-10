@@ -1,12 +1,15 @@
 /**
  * @author Gray
  * @details It's just gravity.py but ported to C++ for more efficiency.
- * @todo Change all raw pointers to smart pointers to remove memory leaks.
  */
 
 #pragma once
 
-#include <bits/stdc++.h>
+#include <iostream>
+#include <climits>
+#include <cmath>
+#include <vector>
+#include <array>
 
 using namespace std;
 
@@ -49,7 +52,7 @@ bool in(Vector2 &p, float x_interval[], float y_interval[])
     return p.x >= x_interval[0] && p.x <= x_interval[1] && p.y >= y_interval[0] && p.y <= y_interval[1];
 }
 
-Vector2 *ZERO_VECTOR = new Vector2(0,0);
+Vector2 *ZERO_VECTOR = new Vector2(0, 0);
 
 class Quadrant
 {
@@ -162,11 +165,13 @@ Vector2 Particle::getVelocity()
     return *velocity;
 }
 
-void Particle::setPosition(Vector2 *p) {
+void Particle::setPosition(Vector2 *p)
+{
     position = p;
 }
 
-void Particle::setVelocity(Vector2 *v) {
+void Particle::setVelocity(Vector2 *v)
+{
     velocity = v;
 }
 
@@ -365,7 +370,7 @@ Vector2 BarnesHutTree::getCOM()
     float My = getYMoment();
     float Tm = getTotalMass();
 
-    Vector2 COM(0,0);
+    Vector2 COM(0, 0);
     COM.x = My / Tm;
     COM.y = Mx / Tm;
 
@@ -442,7 +447,6 @@ private:
 public:
     Universe();
     Universe(float a, float b, float dt, float r);
-    // ~Universe();
     vector<Particle *> getChildren();
     void addChild(Particle *p);
     void start();
@@ -482,23 +486,24 @@ void Universe::start()
     running = true;
     while (start_time < end_time)
     {
-        Vector2 *origin_vector = new Vector2(0,0);
-        Quadrant *q = new Quadrant(origin_vector,radius);
+        Vector2 *origin_vector = new Vector2(0, 0);
+        Quadrant *q = new Quadrant(origin_vector, radius);
 
-        BarnesHutTree BHT(*q);
-        for (Particle *&p : getChildren()) {
-            if(q->contains(p->getPosition()))
-                BHT.insert(p);
+        BarnesHutTree *BHT = new BarnesHutTree(*q);
+        for (Particle *&p : getChildren())
+        {
+            if (q->contains(p->getPosition()))
+                BHT->insert(p);
         }
 
-        for (Particle *&p : getChildren()) {
-            ///cout << "OK\n";
+        for (Particle *&p : getChildren())
+        {
             float mass = p->getMass();
-            
-            Vector2 F = BHT.calculateForce(*p);
-            
-            Vector2 *a = new Vector2(F.x/mass,F.y/mass);
-            Vector2 *v_plus = new Vector2(p->getVelocity().x + step_size * a->x,p->getVelocity().y + step_size * a->y);
+
+            Vector2 F = BHT->calculateForce(*p);
+
+            Vector2 *a = new Vector2(F.x / mass, F.y / mass);
+            Vector2 *v_plus = new Vector2(p->getVelocity().x + step_size * a->x, p->getVelocity().y + step_size * a->y);
             p->setVelocity(v_plus);
             Vector2 *p_plus = new Vector2(p->getPosition().x + step_size * p->getVelocity().x, p->getPosition().y + step_size * p->getVelocity().y);
             p->setPosition(p_plus);
@@ -522,7 +527,8 @@ void Universe::start()
 
     cout << "Output\n";
 
-    for (Particle *&p : getChildren()) {
+    for (Particle *&p : getChildren())
+    {
         cout << "Position at time " << end_time << ": (" << p->getPosition().x << ", " << p->getPosition().y << ")" << endl;
         cout << "Velocity at time " << end_time << ": (" << p->getVelocity().y << ", " << p->getVelocity().y << ")" << endl;
     }
