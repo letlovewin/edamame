@@ -2,12 +2,15 @@
 
 An N-body simulation library written in C++ with Barnes-Hut trees.
 
+## Building
+I suggest you use the `-fsanitize=leak` tag when you compile this, especially in g++.
+
 ## Usage
 
 Everything in this library relies on the `Vector2` class. To initialize a new `Vector2`, write:
 
 ```cpp
-Vector2 *vec = new Vector2(x1,x2);
+Vector2 vec(x1,x2);
 ```
 
 where `x1` and `x2` are `float`.
@@ -15,7 +18,7 @@ where `x1` and `x2` are `float`.
 To establish new particles in your simulation, write:
 
 ```cpp
-Particle *p = new Particle(position,velocity,mass);
+Particle p(position,velocity,mass);
 ```
 
 where `position` and `velocity` are `Vector2` and `mass` is a `float`.

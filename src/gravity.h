@@ -10,6 +10,7 @@
 #include <cmath>
 #include <vector>
 #include <array>
+#include <memory>
 
 using namespace std;
 
@@ -25,6 +26,9 @@ public:
     bool isEmpty;
     Vector2();
     Vector2(float px, float py);
+    Vector2 &operator=(const Vector2 &v);
+    friend bool operator==(const Vector2 &v1, const Vector2 &v2);
+    friend bool operator!=(const Vector2 &v1, const Vector2 &v2);
     bool empty();
 };
 
@@ -42,6 +46,23 @@ Vector2::Vector2(float px, float py)
     isEmpty = false;
 }
 
+Vector2 &Vector2::operator=(const Vector2 &v)
+{
+    x = v.x;
+    y = v.y;
+    return *this;
+}
+
+bool operator!=(const Vector2 &v1, const Vector2 &v2)
+{
+    return v1.x != v2.x || v1.y != v2.y;
+}
+
+bool operator==(const Vector2 &v1, const Vector2 &v2)
+{
+    return v1.x == v2.x && v1.y == v2.y;
+}
+
 bool Vector2::empty()
 {
     return isEmpty;
@@ -52,19 +73,18 @@ bool in(Vector2 &p, float x_interval[], float y_interval[])
     return p.x >= x_interval[0] && p.x <= x_interval[1] && p.y >= y_interval[0] && p.y <= y_interval[1];
 }
 
-Vector2 *ZERO_VECTOR = new Vector2(0, 0);
-
 class Quadrant
 {
 private:
-    Vector2 *origin;
+    Vector2 origin;
     float length;
 
 public:
     Quadrant();
-    Quadrant(Vector2 *v_origin, float v_length);
+    Quadrant(Vector2 &v_origin, float v_length);
+    Quadrant &operator=(Quadrant &q);
     float getLength();
-    bool contains(Vector2 p);
+    bool contains(Vector2 &p);
     Quadrant NorthEast();
     Quadrant NorthWest();
     Quadrant SouthWest();
@@ -73,11 +93,11 @@ public:
 
 Quadrant::Quadrant()
 {
-    origin = new Vector2();
+    origin = Vector2();
     length = 0;
 }
 
-Quadrant::Quadrant(Vector2 *v_origin, float v_length)
+Quadrant::Quadrant(Vector2 &v_origin, float v_length)
 {
     origin = v_origin;
     length = v_length;
@@ -88,54 +108,61 @@ float Quadrant::getLength()
     return length;
 }
 
-bool Quadrant::contains(Vector2 p)
+Quadrant &Quadrant::operator=(Quadrant &q)
 {
-    float x_interval[2] = {origin->x, origin->x + getLength()};
-    float y_interval[2] = {origin->y, origin->y + getLength()};
+    origin.x = q.origin.x;
+    origin.y = q.origin.y;
+    length = q.getLength();
+    return *this;
+}
+
+bool Quadrant::contains(Vector2 &p)
+{
+    float x_interval[2] = {origin.x, origin.x + getLength()};
+    float y_interval[2] = {origin.y, origin.y + getLength()};
     return in(p, x_interval, y_interval);
 }
 
 Quadrant Quadrant::NorthEast()
 {
-    Vector2 *new_origin = new Vector2(origin->x + getLength() / 2, origin->y + getLength() / 2);
+    Vector2 new_origin(origin.x + getLength() / 2, origin.y + getLength() / 2);
     return Quadrant(new_origin, getLength() / 2);
 }
 
 Quadrant Quadrant::NorthWest()
 {
-    Vector2 *new_origin = new Vector2(origin->x, origin->y + getLength() / 2);
+    Vector2 new_origin(origin.x, origin.y + getLength() / 2);
     return Quadrant(new_origin, getLength() / 2);
 }
 
 Quadrant Quadrant::SouthWest()
 {
-    Vector2 *new_origin = new Vector2(origin->x, origin->y);
+    Vector2 new_origin(origin.x, origin.y);
     return Quadrant(new_origin, getLength() / 2);
 }
 
 Quadrant Quadrant::SouthEast()
 {
-    Vector2 *new_origin = new Vector2(origin->x + getLength() / 2, origin->y);
+    Vector2 new_origin(origin.x + getLength() / 2, origin.y);
     return Quadrant(new_origin, getLength() / 2);
 }
 
 class Particle
 {
 private:
-    Vector2 *position;
-    Vector2 *velocity;
+    Vector2 position, velocity;
     float mass;
 
 public:
     Particle();
-    Particle(Vector2 *p, Vector2 *v, float m);
-    bool in(Quadrant quadrant);
+    Particle(Vector2 &p, Vector2 &v, float m);
+    bool in(Quadrant &quadrant);
     bool isNull();
     float getMass();
     Vector2 getPosition();
     Vector2 getVelocity();
-    void setPosition(Vector2 *p);
-    void setVelocity(Vector2 *v);
+    void setPosition(Vector2 &p);
+    void setVelocity(Vector2 &v);
 };
 
 Particle::Particle()
@@ -143,41 +170,43 @@ Particle::Particle()
     mass = 0;
 }
 
-Particle::Particle(Vector2 *p, Vector2 *v, float m)
+Particle::Particle(Vector2 &p, Vector2 &v, float m)
 {
     position = p;
     velocity = v;
     mass = m;
 }
 
-bool Particle::in(Quadrant quadrant)
+bool Particle::in(Quadrant &quadrant)
 {
-    return quadrant.contains(*position);
+    return quadrant.contains(position);
 }
 
 Vector2 Particle::getPosition()
 {
-    return *position;
+    return position;
 }
 
 Vector2 Particle::getVelocity()
 {
-    return *velocity;
+    return velocity;
 }
 
-void Particle::setPosition(Vector2 *p)
+void Particle::setPosition(Vector2 &p)
 {
-    position = p;
+    position.x = p.x;
+    position.y = p.y;
 }
 
-void Particle::setVelocity(Vector2 *v)
+void Particle::setVelocity(Vector2 &v)
 {
-    velocity = v;
+    velocity.x = v.x;
+    velocity.y = v.y;
 }
 
 bool Particle::isNull()
 {
-    return position->empty() && velocity->empty();
+    return position.empty() && velocity.empty();
 }
 
 float Particle::getMass()
@@ -189,12 +218,12 @@ class BarnesHutTree
 {
 private:
     Quadrant quadrant;
-    Particle *particle = nullptr;
+    shared_ptr<Particle> particle = nullptr;
 
-    BarnesHutTree *northWest = nullptr;
-    BarnesHutTree *northEast = nullptr;
-    BarnesHutTree *southWest = nullptr;
-    BarnesHutTree *southEast = nullptr;
+    shared_ptr<BarnesHutTree> northWest = nullptr;
+    shared_ptr<BarnesHutTree> northEast = nullptr;
+    shared_ptr<BarnesHutTree> southWest = nullptr;
+    shared_ptr<BarnesHutTree> southEast = nullptr;
 
 public:
     BarnesHutTree();
@@ -202,22 +231,18 @@ public:
     bool empty();
     bool null();
     Quadrant getQuadrant();
-    array<BarnesHutTree, 4> getChildren();
+    vector<shared_ptr<BarnesHutTree>> getChildren();
     float getTotalMass(float mass);
     float getYMoment(float yMoment);
     float getXMoment(float xMoment);
     Vector2 getCOM();
-    void insert(Particle *p);
+    void insert(Particle &p);
     Vector2 calculateForce(Particle &p, Vector2 &F_t);
-    void setNorthWest(BarnesHutTree &subtree);
-    void setNorthEast(BarnesHutTree &subtree);
-    void setSouthWest(BarnesHutTree &subtree);
-    void setSouthEast(BarnesHutTree &subtree);
 };
 
 BarnesHutTree::BarnesHutTree()
 {
-    quadrant = Quadrant();
+    particle = nullptr;
 }
 
 BarnesHutTree::BarnesHutTree(Quadrant &q)
@@ -240,27 +265,18 @@ Quadrant BarnesHutTree::getQuadrant()
     return quadrant;
 }
 
-array<BarnesHutTree, 4> BarnesHutTree::getChildren()
+vector<shared_ptr<BarnesHutTree>> BarnesHutTree::getChildren()
 {
-    array<BarnesHutTree, 4> children = {*northWest, *northEast, *southWest, *southEast};
+    vector<shared_ptr<BarnesHutTree>> children;
+    if (northWest != nullptr)
+        children.push_back(northWest);
+    if (northEast != nullptr)
+        children.push_back(northEast);
+    if (southWest != nullptr)
+        children.push_back(southWest);
+    if (southEast != nullptr)
+        children.push_back(southEast);
     return children;
-}
-
-void BarnesHutTree::setNorthWest(BarnesHutTree &subtree)
-{
-    northWest = &subtree;
-}
-void BarnesHutTree::setNorthEast(BarnesHutTree &subtree)
-{
-    northEast = &subtree;
-}
-void BarnesHutTree::setSouthWest(BarnesHutTree &subtree)
-{
-    southWest = &subtree;
-}
-void BarnesHutTree::setSouthEast(BarnesHutTree &subtree)
-{
-    southEast = &subtree;
 }
 
 float BarnesHutTree::getTotalMass(float mass = 0)
@@ -270,9 +286,9 @@ float BarnesHutTree::getTotalMass(float mass = 0)
     if (empty() && null())
         return 0;
     float temp_mass = 0;
-    for (BarnesHutTree &subtree : getChildren())
+    for (shared_ptr<BarnesHutTree> &subtree : getChildren())
     {
-        temp_mass += subtree.getTotalMass(mass);
+        temp_mass += subtree->getTotalMass(mass);
     }
     return mass + temp_mass;
 }
@@ -284,9 +300,9 @@ float BarnesHutTree::getYMoment(float yMoment = 0)
     if (empty() && null())
         return 0;
     float temp_moment = 0;
-    for (BarnesHutTree &subtree : getChildren())
+    for (shared_ptr<BarnesHutTree> &subtree : getChildren())
     {
-        temp_moment += subtree.getYMoment(yMoment);
+        temp_moment += subtree->getYMoment(yMoment);
     }
     return yMoment + temp_moment;
 }
@@ -298,68 +314,75 @@ float BarnesHutTree::getXMoment(float xMoment = 0)
     if (empty() && !null())
         return particle->getMass() * particle->getPosition().y;
     float temp_moment = 0;
-    for (BarnesHutTree &subtree : getChildren())
+    for (shared_ptr<BarnesHutTree> &subtree : getChildren())
     {
-        temp_moment += subtree.getXMoment(xMoment);
+        temp_moment += subtree->getXMoment(xMoment);
     }
     return xMoment + temp_moment;
 }
 
-void BarnesHutTree::insert(Particle *p)
+void BarnesHutTree::insert(Particle &p)
 {
     if (null() && empty())
     {
-        particle = p;
+        particle = unique_ptr<Particle>(&p);
         return;
     }
-    if (empty())
+    else if (!null())
     {
-        Quadrant NorthWest = getQuadrant().NorthWest();
-        Quadrant NorthEast = getQuadrant().NorthEast();
-        Quadrant SouthWest = getQuadrant().SouthWest();
-        Quadrant SouthEast = getQuadrant().SouthEast();
-
-        BarnesHutTree *newNorthWestBHT = new BarnesHutTree(NorthWest);
-        BarnesHutTree *newNorthEastBHT = new BarnesHutTree(NorthEast);
-        BarnesHutTree *newSouthWestBHT = new BarnesHutTree(SouthWest);
-        BarnesHutTree *newSouthEastBHT = new BarnesHutTree(SouthEast);
-        northWest = newNorthWestBHT;
-        northEast = newNorthEastBHT;
-        southWest = newSouthWestBHT;
-        southEast = newSouthEastBHT;
-
-        for (BarnesHutTree &subtree : getChildren())
+        Vector2 p_pos = p.getPosition();
+        Vector2 pa_pos = particle->getPosition();
+        if (empty())
         {
+            Quadrant NorthWest = getQuadrant().NorthWest();
+            Quadrant NorthEast = getQuadrant().NorthEast();
+            Quadrant SouthWest = getQuadrant().SouthWest();
+            Quadrant SouthEast = getQuadrant().SouthEast();
 
-            if (subtree.getQuadrant().contains(p->getPosition()))
+            shared_ptr<BarnesHutTree> newNorthWestBHT(new BarnesHutTree());
+            shared_ptr<BarnesHutTree> newNorthEastBHT(new BarnesHutTree());
+            shared_ptr<BarnesHutTree> newSouthWestBHT(new BarnesHutTree());
+            shared_ptr<BarnesHutTree> newSouthEastBHT(new BarnesHutTree());
+            northWest = newNorthWestBHT;
+            northEast = newNorthEastBHT;
+            southWest = newSouthWestBHT;
+            southEast = newSouthEastBHT;
+
+            for (shared_ptr<BarnesHutTree> &subtree : getChildren())
             {
-                subtree.insert(p);
-                break;
+
+                if (subtree->getQuadrant().contains(p_pos))
+                {
+                    subtree->insert(p);
+                    break;
+                }
+            }
+
+            for (shared_ptr<BarnesHutTree> &subtree : getChildren())
+            {
+                if (subtree->getQuadrant().contains(pa_pos))
+                {
+                    subtree->insert(*particle);
+                    break;
+                }
+            }
+
+            particle = nullptr;
+            return;
+        }
+        for (shared_ptr<BarnesHutTree> &subtree : getChildren())
+        {
+            if (!subtree->null())
+            {
+
+                if (subtree->getQuadrant().contains(p_pos))
+                {
+                    subtree->insert(p);
+                    return;
+                }
             }
         }
-
-        for (BarnesHutTree &subtree : getChildren())
-        {
-            if (subtree.getQuadrant().contains(particle->getPosition()))
-            {
-                subtree.insert(particle);
-                break;
-            }
-        }
-
-        particle = nullptr;
         return;
-    }
-    for (BarnesHutTree &subtree : getChildren())
-    {
-        if (!subtree.null())
-        {
-            if (subtree.getQuadrant().contains(p->getPosition()))
-            {
-                subtree.insert(p);
-                return;
-            }
-        }
     }
     return;
 }
@@ -377,11 +400,14 @@ Vector2 BarnesHutTree::getCOM()
     return COM;
 }
 
-Vector2 BarnesHutTree::calculateForce(Particle &p, Vector2 &F_t = *ZERO_VECTOR)
+Vector2 ZERO_VECTOR(0, 0);
+
+Vector2 BarnesHutTree::calculateForce(Particle &p, Vector2 &F_t = ZERO_VECTOR)
 {
     if (empty() && !null())
     {
-        if (particle == &p)
+        Vector2 p_pos = particle->getPosition();
+        if (p_pos == p.getPosition())
             return Vector2(0, 0);
 
         float particle_x = particle->getPosition().x;
@@ -426,9 +452,9 @@ Vector2 BarnesHutTree::calculateForce(Particle &p, Vector2 &F_t = *ZERO_VECTOR)
     {
         Vector2 totalForce_temp(0, 0);
 
-        for (BarnesHutTree &subtree : getChildren())
+        for (shared_ptr<BarnesHutTree> &subtree : getChildren())
         {
-            Vector2 subtree_force = subtree.calculateForce(p, F_t);
+            Vector2 subtree_force = subtree->calculateForce(p, F_t);
             totalForce_temp.x += subtree_force.x;
             totalForce_temp.y += subtree_force.y;
         }
@@ -442,13 +468,13 @@ class Universe
 private:
     float start_time, end_time, step_size, radius;
     bool running;
-    vector<Particle *> children;
+    vector<Particle> children;
 
 public:
     Universe();
     Universe(float a, float b, float dt, float r);
-    vector<Particle *> getChildren();
-    void addChild(Particle *p);
+    vector<Particle> getChildren();
+    void addChild(Particle &p);
     void start();
     void stop();
 };
@@ -466,12 +492,12 @@ Universe::Universe(float a, float b, float dt, float r)
     running = false;
 }
 
-vector<Particle *> Universe::getChildren()
+vector<Particle> Universe::getChildren()
 {
     return children;
 }
 
-void Universe::addChild(Particle *p)
+void Universe::addChild(Particle &p)
 {
     children.push_back(p);
 }
@@ -486,50 +512,37 @@ void Universe::start()
     running = true;
     while (start_time < end_time)
     {
-        Vector2 *origin_vector = new Vector2(0, 0);
-        Quadrant *q = new Quadrant(origin_vector, radius);
-
-        BarnesHutTree *BHT = new BarnesHutTree(*q);
-        for (Particle *&p : getChildren())
+        Vector2 origin_vector(0, 0);
+        Quadrant q(origin_vector, radius);
+        BarnesHutTree BHT(q);
+        for (Particle &p : getChildren())
         {
-            if (q->contains(p->getPosition()))
-                BHT->insert(p);
+            Vector2 position = p.getPosition();
+            if (q.contains(position))
+                BHT.insert(p);
         }
 
-        for (Particle *&p : getChildren())
+        for (Particle &p : getChildren())
         {
-            float mass = p->getMass();
+            float mass = p.getMass();
 
-            Vector2 F = BHT->calculateForce(*p);
+            Vector2 F = BHT.calculateForce(p);
 
-            Vector2 *a = new Vector2(F.x / mass, F.y / mass);
-            Vector2 *v_plus = new Vector2(p->getVelocity().x + step_size * a->x, p->getVelocity().y + step_size * a->y);
-            p->setVelocity(v_plus);
-            Vector2 *p_plus = new Vector2(p->getPosition().x + step_size * p->getVelocity().x, p->getPosition().y + step_size * p->getVelocity().y);
-            p->setPosition(p_plus);
-
-            delete a;
-            delete v_plus;
-            delete p_plus;
-            v_plus = nullptr;
-            p_plus = nullptr;
-            a = nullptr;
+            unique_ptr<Vector2> a(new Vector2(F.x / mass, F.y / mass));
+            Vector2 v_plus(p.getVelocity().x + step_size * a->x, p.getVelocity().y + step_size * a->y);
+            p.setVelocity(v_plus);
+            Vector2 p_plus(p.getPosition().x + step_size * v_plus.x, p.getPosition().y + step_size * v_plus.y);
+            p.setPosition(p_plus);
         }
-
-        delete q;
-        delete origin_vector;
-        q = nullptr;
-        origin_vector = nullptr;
-
         start_time++;
     }
     running = false;
 
     cout << "Output\n";
 
-    for (Particle *&p : getChildren())
+    for (Particle &p : getChildren())
     {
-        cout << "Position at time " << end_time << ": (" << p->getPosition().x << ", " << p->getPosition().y << ")" << endl;
-        cout << "Velocity at time " << end_time << ": (" << p->getVelocity().y << ", " << p->getVelocity().y << ")" << endl;
+        cout << "Position at time " << end_time << ": (" << p.getPosition().x << ", " << p.getPosition().y << ")" << endl;
+        cout << "Velocity at time " << end_time << ": (" << p.getVelocity().y << ", " << p.getVelocity().y << ")" << endl;
     }
 }
