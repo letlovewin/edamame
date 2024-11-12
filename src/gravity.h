@@ -240,7 +240,7 @@ class BarnesHutTree
 {
 private:
     Quadrant quadrant;
-    unique_ptr<Particle> particle;
+    shared_ptr<Particle> particle;
 
     shared_ptr<BarnesHutTree> northWest = nullptr;
     shared_ptr<BarnesHutTree> northEast = nullptr;
@@ -258,7 +258,7 @@ public:
     float getYMoment(float yMoment);
     float getXMoment(float xMoment);
     Vector2 getCOM();
-    void insert(unique_ptr<Particle> &p);
+    void insert(shared_ptr<Particle> &p);
     Vector2 calculateForce(Vector2 p, Vector2 v, float m, Vector2 &F_t);
 };
 
@@ -353,7 +353,7 @@ float BarnesHutTree::getXMoment(float xMoment = 0)
     return xMoment + temp_moment;
 }
 
-void BarnesHutTree::insert(unique_ptr<Particle> &p)
+void BarnesHutTree::insert(shared_ptr<Particle> &p)
 {
     // cout << "null: " << null() << endl;
     // cout << "empty: " << empty() << endl;
@@ -435,31 +435,30 @@ void BarnesHutTree::insert(unique_ptr<Particle> &p)
             southEast = newSouthEastBHT;
             southEast->insert(p);
         }
-        unique_ptr<Particle> particle_transfer = move(particle);
-        particle = nullptr;
+
         if (NorthWest.contains(pa_pos))
         {
             if (northWest == nullptr)
                 northWest = newNorthWestBHT;
-            northWest->insert(particle_transfer);
+            northWest->insert(particle);
         }
         else if (NorthEast.contains(pa_pos))
         {
             if (northEast == nullptr)
                 northEast = newNorthEastBHT;
-            northEast->insert(particle_transfer);
+            northEast->insert(particle);
         }
         else if (SouthWest.contains(pa_pos))
         {
             if (southWest == nullptr)
                 southWest = newSouthWestBHT;
-            southWest->insert(particle_transfer);
+            southWest->insert(particle);
         }
         else if (SouthEast.contains(pa_pos))
         {
             if (southEast == nullptr)
                 southEast = newSouthEastBHT;
-            southEast->insert(particle_transfer);
+            southEast->insert(particle);
         }
 
         particle = nullptr;
@@ -556,13 +555,13 @@ class Universe
 private:
     float start_time, end_time, step_size, radius;
     bool running;
-    vector<unique_ptr<Particle>> children;
+    vector<shared_ptr<Particle>> children;
 
 public:
     Universe();
     Universe(float a, float b, float dt, float r);
-    vector<unique_ptr<Particle>> getChildren();
-    void addChild(unique_ptr<Particle> &p);
+    vector<shared_ptr<Particle>> getChildren();
+    void addChild(shared_ptr<Particle> p);
     void start();
     void stop();
 };
@@ -580,14 +579,14 @@ Universe::Universe(float a, float b, float dt, float r)
     running = false;
 }
 
-vector<unique_ptr<Particle>> Universe::getChildren()
+vector<shared_ptr<Particle>> Universe::getChildren()
 {
     return children;
 }
 
-void Universe::addChild(unique_ptr<Particle> &p)
+void Universe::addChild(shared_ptr<Particle> p)
 {
-    children.push_back(make_unique<Particle>(p));
+    children.push_back(p);
 }
 
 void Universe::start()
@@ -603,25 +602,25 @@ void Universe::start()
         Vector2 origin_vector(0, 0);
         Quadrant q(origin_vector, radius);
         BarnesHutTree BHT(q);
-        for (unique_ptr<Particle> &p : getChildren())
+        for (shared_ptr<Particle> &p : getChildren())
         {
             Vector2 position = p->getPosition();
             if (q.contains(position))
                 BHT.insert(p);
         }
 
-        for (unique_ptr<Particle> &p : getChildren())
+        for (shared_ptr<Particle> &p : getChildren())
         {
             float mass = p->getMass();
             Vector2 position = p->getPosition();
             Vector2 velocity = p->getVelocity();
             Vector2 F = BHT.calculateForce(position,velocity,mass);
             cout << "(" << F.x << ", " << F.y << ")" << endl;
-            unique_ptr<Vector2> a(new Vector2(F.x / mass, F.y / mass));
-            Vector2 v_plus(p->getVelocity().x + step_size * a->x, p->getVelocity().y + step_size * a->y);
-            p->setVelocity(v_plus);
-            Vector2 p_plus(p->getPosition().x + step_size * v_plus.x, p->getPosition().y + step_size * v_plus.y);
-            p->setPosition(p_plus);
+            //Vector2 a(F.x / mass, F.y / mass);
+            //Vector2 v_plus(p.getVelocity().x + step_size * a.x, p.getVelocity().y + step_size * a.y);
+            //p.setVelocity(v_plus);
+            //Vector2 p_plus(p.getPosition().x + step_size * v_plus.x, p.getPosition().y + step_size * v_plus.y);
+            //p.setPosition(p_plus);
         }
         start_time += step_size;
     }
@@ -629,7 +628,7 @@ void Universe::start()
 
     cout << "Output\n";
 
-    for (unique_ptr<Particle> &p : getChildren())
+    for (shared_ptr<Particle> &p : getChildren())
     {
         cout << "Position at time " << end_time << ": (" << p->getPosition().x << ", " << p->getPosition().y << ")" << endl;
         cout << "Velocity at time " << end_time << ": (" << p->getVelocity().x << ", " << p->getVelocity().y << ")" << endl;
