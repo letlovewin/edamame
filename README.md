@@ -2,8 +2,13 @@
 
 An N-body simulation library written in C++ with Barnes-Hut trees.
 
-## Building
-I suggest you use the `-fsanitize=leak` tag when you compile this, especially in g++, since for some reason, if this is ommitted, there is a double free error (sorry). Just put the `gravity.h` file into your program and then compile it however you do.
+## Installation
+Clone the repo:
+
+```bash
+git clone https://github.com/letlovewin/edamame.git
+```
+Then just put the `gravity.h` file into your program and then compile it however you do.
 
 ## Usage
 

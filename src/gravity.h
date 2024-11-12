@@ -156,6 +156,8 @@ private:
 public:
     Particle();
     Particle(Vector2 &p, Vector2 &v, float m);
+    Particle &operator=(Particle &p);
+    friend bool operator==(Particle &p1, Particle &p2);
     bool in(Quadrant &quadrant);
     bool isNull();
     float getMass();
@@ -175,6 +177,22 @@ Particle::Particle(Vector2 &p, Vector2 &v, float m)
     position = p;
     velocity = v;
     mass = m;
+}
+
+Particle &Particle::operator=(Particle &p)
+{
+    if (this != &p)
+    {
+        position = p.position;
+        velocity = p.velocity;
+        mass = p.mass;
+    }
+
+    return *this;
+}
+
+bool operator==(Particle &p1, Particle &p2) {
+    return p1.getVelocity() == p2.getVelocity() && p1.getPosition() == p2.getPosition();
 }
 
 bool Particle::in(Quadrant &quadrant)
@@ -214,11 +232,15 @@ float Particle::getMass()
     return mass;
 }
 
+Vector2 NULL_VECTOR = Vector2(INT_MIN,INT_MAX);
+
+Particle PLACEHOLDER = Particle(NULL_VECTOR,NULL_VECTOR,INT_MIN);
+
 class BarnesHutTree
 {
 private:
     Quadrant quadrant;
-    shared_ptr<Particle> particle = nullptr;
+    Particle particle;
 
     shared_ptr<BarnesHutTree> northWest = nullptr;
     shared_ptr<BarnesHutTree> northEast = nullptr;
@@ -242,7 +264,7 @@ public:
 
 BarnesHutTree::BarnesHutTree()
 {
-    particle = nullptr;
+    this->particle = PLACEHOLDER;
 }
 
 BarnesHutTree::BarnesHutTree(Quadrant &q)
@@ -252,7 +274,7 @@ BarnesHutTree::BarnesHutTree(Quadrant &q)
 
 bool BarnesHutTree::null()
 {
-    return particle == nullptr;
+    return particle == PLACEHOLDER;
 }
 
 bool BarnesHutTree::empty()
@@ -282,7 +304,7 @@ vector<shared_ptr<BarnesHutTree>> BarnesHutTree::getChildren()
 float BarnesHutTree::getTotalMass(float mass = 0)
 {
     if (empty() && !null())
-        return particle->getMass();
+        return particle.getMass();
     if (empty() && null())
         return 0;
     float temp_mass = 0;
@@ -296,7 +318,7 @@ float BarnesHutTree::getTotalMass(float mass = 0)
 float BarnesHutTree::getYMoment(float yMoment = 0)
 {
     if (empty() && !null())
-        return particle->getMass() * particle->getPosition().x;
+        return particle.getMass() * particle.getPosition().x;
     if (empty() && null())
         return 0;
     float temp_moment = 0;
@@ -312,7 +334,7 @@ float BarnesHutTree::getXMoment(float xMoment = 0)
     if (empty() && null())
         return 0;
     if (empty() && !null())
-        return particle->getMass() * particle->getPosition().y;
+        return particle.getMass() * particle.getPosition().y;
     float temp_moment = 0;
     for (shared_ptr<BarnesHutTree> &subtree : getChildren())
     {
@@ -325,13 +347,13 @@ void BarnesHutTree::insert(Particle &p)
 {
     if (null() && empty())
     {
-        particle = unique_ptr<Particle>(&p);
+        particle = p;
         return;
     }
     else if (!null())
     {
         Vector2 p_pos = p.getPosition();
-        Vector2 pa_pos = particle->getPosition();
+        Vector2 pa_pos = particle.getPosition();
         if (empty())
         {
             Quadrant NorthWest = getQuadrant().NorthWest();
@@ -362,12 +384,12 @@ void BarnesHutTree::insert(Particle &p)
             {
                 if (subtree->getQuadrant().contains(pa_pos))
                 {
-                    subtree->insert(*particle);
+                    subtree->insert(particle);
                     break;
                 }
             }
 
-            particle = nullptr;
+            particle = PLACEHOLDER;
             return;
         }
         for (shared_ptr<BarnesHutTree> &subtree : getChildren())
@@ -406,13 +428,13 @@ Vector2 BarnesHutTree::calculateForce(Particle &p, Vector2 &F_t = ZERO_VECTOR)
 {
     if (empty() && !null())
     {
-        Vector2 p_pos = particle->getPosition();
+        Vector2 p_pos = particle.getPosition();
         if (p_pos == p.getPosition())
             return Vector2(0, 0);
 
-        float particle_x = particle->getPosition().x;
-        float particle_y = particle->getPosition().y;
-        float particle_mass = particle->getMass();
+        float particle_x = particle.getPosition().x;
+        float particle_y = particle.getPosition().y;
+        float particle_mass = particle.getMass();
 
         float px = p.getPosition().x;
         float py = p.getPosition().y;
@@ -433,10 +455,10 @@ Vector2 BarnesHutTree::calculateForce(Particle &p, Vector2 &F_t = ZERO_VECTOR)
     Vector2 COM = getCOM();
     float s = getQuadrant().getLength();
 
-    Vector2 pos = particle->getPosition();
+    Vector2 pos = particle.getPosition();
     float particle_x = pos.x;
     float particle_y = pos.y;
-    float particle_mass = particle->getMass();
+    float particle_mass = particle.getMass();
 
     float dx = COM.x - particle_x;
     float dy = COM.y - particle_y;
