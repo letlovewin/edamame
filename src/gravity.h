@@ -616,11 +616,11 @@ void Universe::start()
             Vector2 velocity = p->getVelocity();
             Vector2 F = BHT.calculateForce(position,velocity,mass);
             cout << "(" << F.x << ", " << F.y << ")" << endl;
-            //Vector2 a(F.x / mass, F.y / mass);
-            //Vector2 v_plus(p.getVelocity().x + step_size * a.x, p.getVelocity().y + step_size * a.y);
-            //p.setVelocity(v_plus);
-            //Vector2 p_plus(p.getPosition().x + step_size * v_plus.x, p.getPosition().y + step_size * v_plus.y);
-            //p.setPosition(p_plus);
+            Vector2 a(F.x / mass, F.y / mass);
+            Vector2 v_plus(p->getVelocity().x + step_size * a.x, p->getVelocity().y + step_size * a.y);
+            p->setVelocity(v_plus);
+            Vector2 p_plus(p->getPosition().x + step_size * v_plus.x, p->getPosition().y + step_size * v_plus.y);
+            p->setPosition(p_plus);
         }
         start_time += step_size;
     }
